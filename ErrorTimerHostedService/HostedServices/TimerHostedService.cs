@@ -2,13 +2,18 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ErrorTimerHostedService.HostedServices
 {
     public class TimerHostedService : IHostedService
     {
         private Timer timer;
-        public TimerHostedService() { }
+        private readonly ILogger<TimerHostedService> logger;
+        public TimerHostedService(ILogger<TimerHostedService> logger)
+        {
+            this.logger = logger;
+        }
         public void Dispose()
         {
             timer?.Dispose();
@@ -17,10 +22,16 @@ namespace ErrorTimerHostedService.HostedServices
         {
             timer = new Timer(
                     callback: new TimerCallback(
-                        async (x) =>
+                        (x) =>
                         {
-                            await Task.Delay(15000);
-                            throw new Exception("TEST THROWS!!");
+                            try
+                            {
+                                throw new Exception("TEST THROWS!!");
+                            }
+                            catch
+                            {
+                                logger.LogWarning($"TEST: LOGGING WARNING. {DateTime.Now.ToLongTimeString()}");
+                            }
                         }),
                     state: null,
                     dueTime: TimeSpan.Zero,
